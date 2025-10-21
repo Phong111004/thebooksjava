@@ -18,6 +18,14 @@
                     <span class="slogan">Khám phá thế giới tri thức</span>
                 </div>
             </div>
+            <div class="user-actions">
+                <!--
+                    Nội dung này sẽ được cập nhật bởi JavaScript.
+                    Mặc định là các nút Đăng nhập/Đăng ký.
+                -->
+                <a href="login.html" class="btn-login">Đăng nhập</a>
+                <a href="register.html" class="btn-register">Đăng ký</a>
+            </div>
         </div>
     </header>
     <main>
@@ -58,6 +66,40 @@
             </div>
         </section>
     </main>
-    <script src="contact.js"></script>
+    <script>
+        // Contact form handling - since no backend endpoint, just show alert or handle client-side
+        function updateUserHeader() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const userActionsDiv = document.querySelector('.user-actions');
+
+            if (user && userActionsDiv) {
+                userActionsDiv.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-greeting">Xin chào, <strong>${user.username}</strong>!</span>
+                        <button id="logout-button" class="btn-logout">Đăng xuất</button>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    // Chuyển về trang chủ sau khi đăng xuất
+                    window.location.href = 'index.html';
+                });
+            }
+        }
+
+        document.getElementById('contact-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            // For now, just alert; in real app, send to backend or email service
+            alert(`Thank you, ${name}! Your message has been sent.`);
+            // Reset form
+            e.target.reset();
+        });
+
+        updateUserHeader();
+    </script>
 </body>
 </html>

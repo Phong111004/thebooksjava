@@ -1,0 +1,16 @@
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\repository\CategoryRepository.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\BookReadingApplication.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\repository\BookRepository.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\service\UdpBroadcastService.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\config\SecurityConfig.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\controller\UserController.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\controller\CategoryController.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\entity\User.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\config\WebConfig.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\controller\BookController.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\repository\ReadingHistoryRepository.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\config\CustomPhysicalNamingStrategy.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\entity\Category.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\entity\Book.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\entity\ReadingHistory.java
+D:\Thuc hanh\MiniProject\src\main\java\com\example\bookreading\repository\UserRepository.java

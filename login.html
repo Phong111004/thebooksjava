@@ -39,6 +39,33 @@
             </div>
         </section>
     </main>
-    <script src="auth.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    alert('Login successful!');
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Error logging in:', error);
+                alert('An error occurred during login.');
+            }
+        });
+    </script>
 </body>
 </html>

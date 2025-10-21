@@ -19,7 +19,6 @@
                 </div>
             </div>
             <div class="user-actions">
-                <!-- Header UI sẽ được script.js cập nhật -->
             </div>
         </div>
         <nav>
@@ -37,11 +36,193 @@
         <section class="books-section">
             <h2>Sách bạn đang theo dõi</h2>
             <div id="followed-books-container" class="books-container">
-                <!-- Sách đã theo dõi sẽ được chèn vào đây -->
+                <p class="loading-message">Đang tải danh sách theo dõi...</p>
             </div>
         </section>
     </main>
-    <script src="script.js"></script>
-    <script src="follow.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        // Cập nhật header hiển thị thông tin user
+        function updateUserHeader() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const userActionsDiv = document.querySelector('.user-actions');
+
+            if (user && userActionsDiv) {
+                userActionsDiv.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-greeting">Xin chào, <strong>${user.username}</strong>!</span>
+                        <button id="logout-button" class="btn-logout">Đăng xuất</button>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html';
+                });
+            } else if (userActionsDiv) {
+                userActionsDiv.innerHTML = `
+                    <a href="login.html" class="btn-login">Đăng nhập</a>
+                    <a href="register.html" class="btn-register">Đăng ký</a>
+                `;
+            }
+        }
+
+        // Hàm lấy danh sách sách đang theo dõi (từ ReadingHistory)
+        async function fetchFollowedBooks() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const container = document.getElementById('followed-books-container');
+
+            // Kiểm tra đăng nhập
+            if (!user) {
+                container.innerHTML = '<p class="no-results">Vui lòng <a href="login.html">đăng nhập</a> để xem danh sách theo dõi của bạn.</p>';
+                return;
+            }
+
+            // Lấy userId (hỗ trợ cả camelCase và PascalCase)
+            const userId = user.userId || user.UserID;
+            
+            if (!userId) {
+                console.error("localStorage user:", user);
+                container.innerHTML = '<p class="error-message">Lỗi: Thông tin đăng nhập không hợp lệ. Vui lòng <a href="login.html">đăng nhập lại</a>.</p>';
+                return;
+            }
+
+            try {
+                // 🔥 SỬ DỤNG ENDPOINT /history thay vì /follows
+                const response = await fetch(`${API_BASE}/users/${userId}/history`);
+
+                if (!response.ok) {
+                    throw new Error(`Không thể tải danh sách (HTTP ${response.status})`);
+                }
+
+                const historyData = await response.json();
+                container.innerHTML = ''; // Xóa loading message
+
+                // Kiểm tra dữ liệu
+                if (!Array.isArray(historyData)) {
+                    console.error("API không trả về mảng:", historyData);
+                    throw new Error("Dữ liệu không hợp lệ từ server");
+                }
+
+                if (historyData.length === 0) {
+                    container.innerHTML = '<p class="no-results">Bạn chưa có sách nào trong danh sách theo dõi.</p>';
+                    return;
+                }
+
+                // 🔥 LẤY THÔNG TIN CHI TIẾT CỦA TỪNG SÁCH
+                const bookPromises = historyData.map(async (history) => {
+                    try {
+                        const bookResponse = await fetch(`${API_BASE}/books/${history.bookId}`);
+                        if (bookResponse.ok) {
+                            const book = await bookResponse.json();
+                            return {
+                                ...book,
+                                progress: history.progress || 0,
+                                lastReadAt: history.lastReadAt
+                            };
+                        }
+                    } catch (err) {
+                        console.error(`Lỗi khi lấy thông tin sách ${history.bookId}:`, err);
+                    }
+                    return null;
+                });
+
+                // Đợi tất cả request hoàn thành
+                const books = await Promise.all(bookPromises);
+                
+                // Lọc bỏ null và hiển thị
+                const validBooks = books.filter(book => book !== null);
+
+                if (validBooks.length === 0) {
+                    container.innerHTML = '<p class="error-message">Không thể tải thông tin sách. Vui lòng thử lại sau.</p>';
+                    return;
+                }
+
+                // Render từng sách
+                validBooks.forEach(book => {
+                    const bookDiv = document.createElement('div');
+                    bookDiv.className = 'book-item';
+                    
+                    // Tính phần trăm đã đọc
+                    const progressPercent = Math.round(book.progress || 0);
+                    
+                    bookDiv.innerHTML = `
+                        <img src="${book.imageUrl || 'https://via.placeholder.com/280x400/8B4513/FFFFFF?text=No+Image'}"
+                             alt="${book.title || 'Không có tiêu đề'}"
+                             onerror="this.onerror=null; this.src='https://via.placeholder.com/280x400/8B4513/FFFFFF?text=No+Image';">
+                        <h3>${book.title || 'Không có tiêu đề'}</h3>
+                        <p class="book-author">${book.author || 'Không rõ tác giả'}</p>
+                        <p class="book-progress">Đã đọc: ${progressPercent}%</p>
+                        <div class="book-actions">
+                            <a href="details.html?id=${book.bookId}" class="btn-detail">Xem chi tiết</a>
+                            <button onclick="removeFromFollow(${book.bookId}, ${userId})" class="btn-remove">Xóa</button>
+                        </div>
+                    `;
+                    container.appendChild(bookDiv);
+                });
+
+            } catch (error) {
+                console.error('Lỗi khi tải danh sách theo dõi:', error);
+                container.innerHTML = `<p class="error-message">Đã xảy ra lỗi: ${error.message}</p>`;
+            }
+        }
+
+        // Hàm xóa sách khỏi danh sách theo dõi
+        async function removeFromFollow(bookId, userId) {
+            if (!confirm('Bạn có chắc muốn xóa sách này khỏi danh sách theo dõi?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/history/${bookId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Đã xóa khỏi danh sách theo dõi!');
+                    fetchFollowedBooks(); // Reload danh sách
+                } else {
+                    throw new Error('Không thể xóa sách');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xóa:', error);
+                alert('Có lỗi xảy ra khi xóa sách!');
+            }
+        }
+
+        // Hàm tải danh mục
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                if (!response.ok) return;
+                
+                const categories = await response.json();
+                const dropdown = document.getElementById('category-dropdown');
+                if (!dropdown) return;
+                
+                dropdown.innerHTML = '';
+                categories.forEach(category => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `index.html?categoryId=${category.categoryId}`;
+                    a.textContent = category.name;
+                    li.appendChild(a);
+                    dropdown.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Lỗi khi tải danh mục:', error);
+            }
+        }
+
+        // Chạy các hàm khi trang load
+        window.addEventListener('DOMContentLoaded', function() {
+            updateUserHeader();
+            fetchCategories();
+            fetchFollowedBooks();
+        });
+
+        // Export hàm để có thể gọi từ onclick
+        window.removeFromFollow = removeFromFollow;
+    </script>
 </body>
 </html>

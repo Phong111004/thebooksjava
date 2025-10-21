@@ -1,0 +1,16 @@
+com\example\bookreading\entity\ReadingHistory.class
+com\example\bookreading\repository\CategoryRepository.class
+com\example\bookreading\controller\CategoryController.class
+com\example\bookreading\repository\ReadingHistoryRepository.class
+com\example\bookreading\entity\User.class
+com\example\bookreading\BookReadingApplication.class
+com\example\bookreading\service\UdpBroadcastService.class
+com\example\bookreading\repository\UserRepository.class
+com\example\bookreading\config\WebConfig.class
+com\example\bookreading\repository\BookRepository.class
+com\example\bookreading\config\CustomPhysicalNamingStrategy.class
+com\example\bookreading\controller\BookController.class
+com\example\bookreading\controller\UserController.class
+com\example\bookreading\entity\Book.class
+com\example\bookreading\config\SecurityConfig.class
+com\example\bookreading\entity\Category.class

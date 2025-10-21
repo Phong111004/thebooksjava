@@ -49,6 +49,120 @@
             </div>
         </section>
     </main>
-    <script src="script.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        function updateUserHeader() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const userActionsDiv = document.querySelector('.user-actions');
+
+            if (user && userActionsDiv) {
+                userActionsDiv.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-greeting">Xin chào, <strong>${user.username}</strong>!</span>
+                        <button id="logout-button" class="btn-logout">Đăng xuất</button>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    // Tải lại trang để cập nhật trạng thái header
+                    window.location.reload();
+                });
+            }
+        }
+
+        async function fetchCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                const categories = await response.json();
+                const dropdown = document.getElementById('category-dropdown');
+                dropdown.innerHTML = '';
+                categories.forEach(category => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `javascript:fetchBooksByCategory(${category.categoryId})`;
+                    a.textContent = category.name;
+                    li.appendChild(a);
+                    dropdown.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        }
+
+        function displayBooks(books = []) {
+            const container = document.getElementById('books-container');
+            container.innerHTML = '';
+            if (books.length === 0) {
+                container.innerHTML = '<p class="no-results">Không tìm thấy sách nào phù hợp.</p>';
+                return;
+            }
+            books.forEach(book => {
+                const bookDiv = document.createElement('div');
+                bookDiv.className = 'book';
+                
+                // Lấy tên category từ object category hoặc hiển thị "Chưa phân loại"
+                const categoryName = book.category ? book.category.name : 'Chưa phân loại';
+                
+                bookDiv.innerHTML = `
+                    <div class="book-image-container">
+                        <img src="${book.imageUrl || 'https://via.placeholder.com/280x400/8B4513/FFFFFF?text=No+Image'}" 
+                             alt="${book.title}"
+                             onerror="this.src='https://via.placeholder.com/280x400/8B4513/FFFFFF?text=No+Image'">
+                    </div>
+                    <div class="book-content">
+                        <h3>${book.title}</h3>
+                        <div class="book-meta">
+                            <p><strong>Tác giả:</strong> ${book.author || 'Không rõ'}</p>
+                            <p><strong>Thể loại:</strong> ${categoryName}</p>
+                        </div>
+                        <a href="details.html?id=${book.bookId}" class="read-btn">Xem chi tiết</a>
+                    </div>
+                `;
+                container.appendChild(bookDiv);
+            });
+        }
+
+        async function fetchAllBooks() {
+            try {
+                const response = await fetch(`${API_BASE}/books`);
+                const books = await response.json();
+                displayBooks(books);
+            } catch (error) {
+                console.error('Error fetching books:', error);
+                document.getElementById('books-container').innerHTML = '<p>Error loading books.</p>';
+            }
+        }
+
+        async function fetchBooksByCategory(categoryId) {
+            try {
+                const response = await fetch(`${API_BASE}/books/category/${categoryId}`);
+                const books = await response.json();
+                displayBooks(books);
+            } catch (error) {
+                console.error('Error fetching books by category:', error);
+            }
+        }
+
+        document.getElementById('search-button').addEventListener('click', async () => {
+            const query = document.getElementById('search-input').value.trim();
+            if (query) {
+                try {
+                    const response = await fetch(`${API_BASE}/books/search?q=${encodeURIComponent(query)}`);
+                    const books = await response.json();
+                    displayBooks(books);
+                } catch (error) {
+                    console.error('Error searching books:', error);
+                }
+            } else {
+                fetchAllBooks();
+            }
+        });
+
+        // Load initial data
+        updateUserHeader();
+        fetchCategories();
+        fetchAllBooks();
+    </script>
 </body>
 </html>

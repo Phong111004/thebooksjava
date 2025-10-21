@@ -18,14 +18,174 @@
                     <span class="slogan">Khám phá thế giới tri thức</span>
                 </div>
             </div>
+            <div class="user-actions">
+                <a href="login.html" class="btn-login">Đăng nhập</a>
+                <a href="register.html" class="btn-register">Đăng ký</a>
+            </div>
         </div>
-    </header>
+        </header>
+
     <main>
         <div id="book-detail-container" class="book-detail-container">
-            <!-- Nội dung chi tiết sách sẽ được JavaScript chèn vào đây -->
             <p class="loading-message">Đang tải chi tiết sách...</p>
         </div>
     </main>
-    <script src="details.js"></script>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api'; // Đảm bảo API base đúng
+
+        // --- Các hàm API thật ---
+        async function checkFollowStatus(userId, bookId) {
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/history/${bookId}`);
+                return response.ok; // Trả về true nếu tìm thấy (đã follow), ngược lại false
+            } catch (error) {
+                console.error('Error checking follow status:', error);
+                return false;
+            }
+        }
+
+        async function toggleFollow(userId, bookId, follow) {
+            const method = follow ? 'POST' : 'DELETE';
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/history/${bookId}`, { method });
+                return response.ok;
+            } catch (error) {
+                console.error('Error toggling follow:', error);
+                return false;
+            }
+        }
+
+        async function fetchReadingProgress(userId, bookId) {
+            try {
+                const response = await fetch(`${API_BASE}/users/${userId}/history/${bookId}`);
+                return response.ok ? await response.json() : null;
+            } catch (error) {
+                console.error('Error fetching reading progress:', error);
+                return null;
+            }
+        }
+        // --- Kết thúc Placeholder ---
+
+
+        function updateUserHeader() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const userActionsDiv = document.querySelector('.user-actions');
+
+            if (user && userActionsDiv) {
+                userActionsDiv.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-greeting">Xin chào, <strong>${user.username}</strong>!</span>
+                        <button id="logout-button" class="btn-logout">Đăng xuất</button>
+                    </div>
+                `;
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    localStorage.removeItem('user');
+                    window.location.href = 'index.html'; // Chuyển về trang chủ
+                });
+            } else if (userActionsDiv) {
+                // Đảm bảo nút login/register hiện lại nếu không có user
+                userActionsDiv.innerHTML = `
+                    <a href="login.html" class="btn-login">Đăng nhập</a>
+                    <a href="register.html" class="btn-register">Đăng ký</a>
+                `;
+            }
+        }
+
+        function getBookIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        async function fetchBookDetails() {
+            const bookId = getBookIdFromUrl();
+            const container = document.getElementById('book-detail-container');
+            const user = JSON.parse(localStorage.getItem('user')); // Lấy thông tin user
+
+            if (!bookId) {
+                container.innerHTML = '<p class="error-message">Không tìm thấy ID sách.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/books/${bookId}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                         throw new Error('Book not found');
+                    } else {
+                         throw new Error(`Server error: ${response.status}`);
+                    }
+                }
+                const book = await response.json();
+
+                // Kiểm tra tiến độ đọc và trạng thái follow (nếu đã đăng nhập)
+                let readingProgress = null;
+                let isFollowing = false;
+                if (user) {
+                    readingProgress = await fetchReadingProgress(user.userId, book.bookId);
+                    isFollowing = !!readingProgress;
+                }
+
+                // Tạo HTML với cấu trúc khớp CSS
+                container.innerHTML = `
+                    <div class="book-detail-card">
+                        <div class="book-detail-image">
+                            <img src="${book.imageUrl || 'images/default.jpg'}" alt="${book.title}">
+                        </div>
+                        <div class="book-detail-content">
+                            <h1>${book.title}</h1>
+                            <div class="book-detail-meta">
+                                <p><strong>Tác giả:</strong> ${book.author || 'Chưa rõ'}</p>
+                                <p><strong>Thể loại:</strong> ${book.category ? book.category.name : 'Chưa rõ'}</p>
+                                </div>
+                            <div class="book-description">
+                                <h2>Mô tả</h2>
+                                <p>${book.description || 'Chưa có mô tả cho sách này.'}</p>
+                            </div>
+
+                            <div class="book-detail-actions">
+                                ${readingProgress ?
+                                    `<a href="read.html?id=${book.bookId}" class="btn-action btn-read-continue">Đọc tiếp</a>` :
+                                    (book.pdfPath ? `<a href="read.html?id=${book.bookId}" class="btn-action btn-start-reading">Bắt đầu đọc</a>` : '<span class="no-content-message">Nội dung sách chưa có sẵn</span>')
+                                }
+                                ${user ? `<button id="follow-button" class="btn-action btn-follow ${isFollowing ? 'following' : ''}">${isFollowing ? 'Đang theo dõi' : 'Theo dõi'}</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                 // Thêm Event Listener cho nút Follow (chỉ khi user đăng nhập)
+                if (user) {
+                    const followButton = document.getElementById('follow-button');
+                    if (followButton) {
+                        followButton.addEventListener('click', async () => {
+                            const currentStatus = followButton.classList.contains('following');
+                            const newStatus = !currentStatus;
+                            const success = await toggleFollow(user.userId, book.bookId, newStatus);
+                            if (success) {
+                                followButton.classList.toggle('following', newStatus);
+                                followButton.textContent = newStatus ? 'Đang theo dõi' : 'Theo dõi';
+                            } else {
+                                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                            }
+                        });
+                    }
+                }
+
+            } catch (error) {
+                console.error('Error fetching book details:', error);
+                 if (error.message === 'Book not found') {
+                    container.innerHTML = '<p class="error-message">Không tìm thấy sách bạn yêu cầu.</p>';
+                 } else {
+                    container.innerHTML = '<p class="error-message">Đã xảy ra lỗi khi tải chi tiết sách.</p>';
+                 }
+            }
+        }
+
+        // --- Chạy khi trang tải ---
+        updateUserHeader(); // Cập nhật header trước
+        fetchBookDetails(); // Sau đó tải chi tiết sách
+
+    </script>
 </body>
 </html>

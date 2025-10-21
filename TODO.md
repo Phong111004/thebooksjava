@@ -1,32 +1,30 @@
-# Backend Development for Website Đọc Sách
+# Migration Plan: Node.js to Java Spring Boot with UDP Sockets
 
-- [x] Set up Node.js project: Create package.json with dependencies (express, mssql, cors, dotenv)
-- [x] Create server.js: Set up Express app, connect to SQL Server, add middleware (CORS, JSON parsing)
-- [x] Define models: Create models/Book.js, models/Category.js, models/User.js (using mssql for queries)
-- [x] Create API routes: routes/books.js (GET, POST for books), routes/categories.js (GET, POST for categories), routes/users.js (basic auth routes)
-- [x] Implement basic CRUD: For books and categories in their respective routes
-- [x] Update frontend: Modify index.html to fetch categories from backend API (/api/categories) instead of IndexedDB
-- [x] Install dependencies: Run npm install
-- [x] Run server: Start the server with node server.js
-- [x] Test APIs: Use curl or Postman to test endpoints (/api/books, /api/categories, /api/users)
-- [x] Integrate with frontend: Ensure categories load from API, handle errors
-- [x] Thorough testing: Test all endpoints, error handling, integration with frontend, edge cases
-- [x] Run server for testing
-- [x] Test GET /api/categories endpoint (server connection failed)
-- [x] Test GET /api/books endpoint (server connection failed)
-- [x] Test other CRUD endpoints (POST, PUT, DELETE for categories and books) (server connection failed)
-- [x] Test user endpoints (server connection failed)
-- [x] Check frontend category loading from API (server connection failed)
-- [x] Test error handling (invalid IDs, missing data) (server connection failed)
-- [x] Verify database data retrieval accuracy (server connection failed)
-- [x] Verify database schema and data integrity
-- [x] Check book-category relationships
-- [x] Add books display functionality to website
-- [x] Update CSS for books section
-- [ ] Diagnose SQL Server connection issues
-- [ ] Check SQL Server services and instances
-- [ ] Verify firewall settings for port 1433
-- [ ] Confirm authentication mode and permissions
-- [ ] Update server.js with correct connection config
-- [ ] Test database connection in server.js
-- [ ] Run server and test API endpoints
+## Overview
+Migrate the entire Node.js Express backend to Java Spring Boot, ensuring all functions and data integrity are preserved. Incorporate UDP sockets for real-time broadcasting (e.g., book updates to clients).
+
+## Steps
+- [x] Set up Spring Boot project structure (pom.xml, application.properties)
+- [x] Create JPA entities (User, Book, Category, ReadingHistory)
+- [x] Create repositories for data access
+- [x] Create services for business logic
+- [x] Create REST controllers for all endpoints (books, categories, users)
+- [x] Implement authentication with Spring Security and BCrypt
+- [x] Configure CORS and static file serving
+- [x] Implement UDP broadcasting service for real-time updates
+- [ ] Test DB connection and all endpoints
+- [ ] Verify data integrity and function preservation
+- [ ] Update build scripts (remove Node.js, add Java build)
+
+## Testing Checklist
+- DB connection: Ensure SQL Server connection works.
+- Endpoints: All GET/POST/PUT/DELETE for books, categories, users, history.
+- Auth: Login/register with password hashing.
+- UDP: Broadcasting works (e.g., notify clients on book add/update).
+- Static files: Images, CSS, JS served correctly.
+- CORS: Frontend can access APIs.
+
+## Notes
+- DB schema unchanged; data preserved.
+- Use UDP for broadcasting to optimize for speed (e.g., DatagramSocket in Java).
+- Clients may need to listen for UDP packets or integrate with WebSockets if needed.
