@@ -6,7 +6,6 @@ com\example\bookreading\entity\User.class
 com\example\bookreading\BookReadingApplication.class
 com\example\bookreading\service\UdpBroadcastService.class
 com\example\bookreading\repository\UserRepository.class
-com\example\bookreading\config\WebConfig.class
 com\example\bookreading\repository\BookRepository.class
 com\example\bookreading\config\CustomPhysicalNamingStrategy.class
 com\example\bookreading\controller\BookController.class
