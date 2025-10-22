@@ -12,7 +12,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/api/**")
-                .allowedOrigins("http://127.0.0.1:5500") // frontend port, served by Spring Boot
+                .allowedOrigins(
+                        "http://127.0.0.1:5500", 
+                        "https://thebooks-java-pikqimfah-phong11084-projects.vercel.app" 
+                ) 
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
@@ -20,7 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve static files from current directory (images, css, js)
         registry.addResourceHandler("/**")
                 .addResourceLocations("file:./");
     }
